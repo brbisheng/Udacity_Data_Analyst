@@ -1,0 +1,533 @@
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(message=FALSE, warning = FALSE, echo=FALSE)
+```
+
+<head>
+<style>
+#top {
+    background: linear-gradient(to right, #ff9966 0%, #3399ff 100%);
+}
+</style>
+</head>
+
+<center>
+<div id = top>
+<font size = 8 color = 'black'>Prosper.com Exploratory Data Analysis</font>
+<br />
+<font size = 5 color = 'black'>by Sheng BI</font>
+<br />
+<br />
+<font size = 6 color = 'white'>Part II</font>
+</div>
+</center>
+
+```{r echo=FALSE, eval=T, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+## Load libraries and clean data
+
+library(ggplot2)
+library(robustbase)
+library(magrittr)
+# library(ggpubr)
+# library(ggExtra)
+# library(gridExtra)
+# library(plyr)
+library(dplyr)
+library(RColorBrewer)
+```
+
+```{r echo=FALSE, eval=T, Load_the_Data}
+
+# Load and Clean the Data
+
+## read data
+df <- read.csv('prosperLoanData.csv', 
+               stringsAsFactors = FALSE,
+               na.strings = c(''))
+
+## find the duplicate Listing Keys
+find_duplicates <- function(x) {
+  df_duplicates <- x %>%
+    plyr::ddply(.data=., .variables = 'ListingKey',
+                .fun = function(subdf) nrow(subdf)) %>%
+    subset(x=., V1>=2)
+  return(df_duplicates)
+}
+
+df_listingkey_m <- find_duplicates(df)
+
+## remove duplicates
+
+remove_dup <- function(x =df, dup = df_listingkey_m$ListingKey) {
+  
+  rows_kept <- c()
+  
+  df1 <- x[x$ListingKey %in% dup,]
+  
+  for (each in dup) {
+    temp_df1 <- subset(df1, ListingKey == each)
+    rows_kept <- c(rows_kept, max(rownames(temp_df1)))
+  }
+  
+  df1_removed <- df1[!(rownames(df1) %in% rows_kept), ]
+  
+  final_df <- x[!(rownames(x) %in% rownames(df1_removed)), ]
+  
+  return(final_df)
+}
+
+## get the cleaned data frame
+df2 <- remove_dup()
+
+rm(df_listingkey_m)
+
+## outlier_detector and listing categories
+is_outlier <- function(x) {
+  return(x < quantile(x, probs = 0.25, na.rm = TRUE) - 
+           1.5 * IQR(x = x, na.rm=TRUE) | 
+           x > quantile(x, probs = 0.75, na.rm = TRUE) + 
+           1.5 * IQR(x = x, na.rm=TRUE))
+}
+
+listing_category_list <- 
+  c('Not Available', 'Debt Consolidation', 'Home Improvement',
+    'Business', 'Personal Loan', 'Student Use', 'Auto', 
+    'Other', 'Baby&Adoption', 'Boat', 'Cosmetic Procedure',
+    'Engagement Ring', 'Green Loans', 'Household Expenses',
+    'Large Purchases', 'Medical/Dental', 'Motorcycle', 'RV', 'Taxes',
+    'Vacation', 'Wedding Loans')
+```
+
+# Bivariate Plots Section
+
+<font size = 5> - (3.1) Credit Score, and related variables </font>
+
+<font size = 5> - (3.1.1) Credit Score and Credit History </font>
+
+> For Credit History, I choose 3 variables which I find representative: (1) `Total Inquiries`; (2) `TradesNeverDelinquent..percentage`.. (3) `BankcardUtilization`.
+
+> For the variable total Inquiries, 10 % of the data are outliers. The coordinates are adjusted to focus on the main parts of the boxplot. As the credit score increases, the median of total inquiries decreases from 9 to 5. 
+
+```{r echo=F, eval=T, TotalInquries_CreditScore}
+
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = TotalInquiries)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) + 
+  coord_cartesian(ylim = c(0,35)) + 
+  xlab(label = 'CreditScoreRangeLower') + 
+  stat_summary(aes(group=1), fun.y = median, geom='smooth', 
+               color = 'orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9) +
+  scale_color_brewer(palette = 'Blues')
+```
+
+> For the variable TradesNeverDelinquent..percentage., we notice a very clear increasing trend of the non-delinquency ratio as the credit score increases. 
+
+```{r echo=FALSE, eval = T, NeverDel_CreditScore}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = TradesNeverDelinquent..percentage.)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) + 
+  stat_summary(fun.y = median, geom = 'smooth', aes(group =1),
+               color ='orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9) + 
+  xlab(label = 'CreditScoreRangeLower') +
+  scale_color_brewer(palette = 'Blues')
+```
+
+> For the variable BankCardUtilization, we notice a very clear increasing trend of the bank card utilization rate as the credit score increases. The curve is concave.
+
+```{r echo=FALSE, eval = T, BankCard_CreditScore}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = BankcardUtilization)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) + 
+  stat_summary(fun.y = median, geom = 'smooth', aes(group =1),
+               color = 'orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9)  + 
+  xlab(label = 'CreditScoreRangeLower') +
+  coord_cartesian(ylim=c(0,3)) +
+  scale_color_brewer(palette = 'Blues')
+```
+
+<font size = 4> - (3.1.2) Credit Score and Employment/Income  </font>
+
+> I investigate the following variables which are representative: (1) EmploymentStatus; (2) StatedMonthlyIncome; (3) DebtToIncomeRatio.
+
+> The definition of the variable EmploymentStatus is somehow vague. I would expect that 'Not employed' represents a category which has low credit score, however, its median credit score is much higher than the Part-time category.
+
+```{r echo=FALSE, eval = T, EmploymentStatus_CreditScore}
+temp <- df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower) &
+           !is.na(EmploymentStatus)) %>%
+  plyr::ddply(.data=.,.variables='EmploymentStatus',
+              .fun = function(x) median(x$CreditScoreRangeLower)) %>%
+  .[order(.$V1),]
+
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower) &
+           !is.na(EmploymentStatus)) %>%
+  ggplot(data = ., mapping = aes(x = factor(EmploymentStatus,
+                                            levels = temp$EmploymentStatus),
+                                 y = CreditScoreRangeLower)) + 
+  geom_boxplot(fill='lightblue') + 
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group =1), color = 'orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9) + coord_flip()+
+  xlab('EmploymentStatus')
+```
+
+
+> The median monthly income of each credit score range is increasing.
+
+```{r echo=FALSE, eval = T, StateIncome_CreditScore}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)  & 
+           !is.na(ProsperRating..Alpha.) &
+           !is_outlier(StatedMonthlyIncome)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = StatedMonthlyIncome)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) + 
+  stat_summary(fun.y = median, geom = 'smooth', aes(group =1),
+               color = 'orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9) + 
+  xlab(label = 'CreditScoreRangeLower') + 
+  scale_color_brewer(palette = 'Blues')
+```
+
+> The Debt To Income Ratio is following a non-monotonic pattern as credit score increases. The median ratio for those whose credit score falls into the range range 700~740 is the highest, and the middle part of their boxplot is higher than the other categories. 
+
+```{r echo=FALSE, eval = T,DebttoIncome_CreditScore}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower) &
+           !is_outlier(DebtToIncomeRatio)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = DebtToIncomeRatio)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) + 
+  stat_summary(fun.y = median, geom = 'smooth', aes(group =1),
+               color = 'orange') +
+  stat_summary(fun.y = median, geom = 'point', aes(group =1), 
+               color = 'black', shape = 2, alpha = 0.9) + 
+  xlab(label = 'CreditScoreRangeLower') + 
+  scale_color_brewer(palette = 'Blues')
+
+```
+
+## ____
+
+<font size = 5> - (3.2) Prosper Rating and its determinants </font>
+
+<font size = 5> - (3.2.1) Prosper Rating and Credit Score </font>
+
+> It is important to notice that 'Credit Score' represents the rating for the borrower, while 'Prosper Rating' represents the rating for the loan. 
+
+> From the graph, we see that Credit score is positively correlated with the prosper rating, the higher the credit score, the better the prosper rating. The credit score for the loan categories B and C are flatter than other categories, implying that the prosper rating of these loans may have other important determinants. For the other categories, their credit score distributions are more concentrated, implying that these credit score and prosper rating for those categories are strongly correlated.
+
+```{r echo = F, eval = T, CreditScore_ProsperRating}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)  & 
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data=., Prosper_Rating = factor(ProsperRating..Alpha.,
+                                                 levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = Prosper_Rating,
+                                 y = CreditScoreRangeLower)) + 
+  geom_boxplot(aes(fill = Prosper_Rating)) + 
+  stat_summary(fun.y = median, aes(group =1), geom='smooth') +
+  stat_summary(fun.y = median, aes(group =1), geom='point', shape =3) +
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens'))
+
+## use manual to override. 
+## be careful, it is not scale_color_manual.
+## I can also use scale_x_discrete(..) to produce the same effect as factor.
+## https://stackoverflow.com/questions/6919025/how-to-assign-colors-to-categorical-variables-in-ggplot2-that-have-stable-mappin
+```
+
+> Since Prosper rating and Credit score are positively correlated, we expect that the variables used in the last section have the relationships of the same sense with Prosper rating. For example, Total inquiries is negatively correlated with Prosper Rating, and Total income is positively correlated with Prosper Rating.
+
+```{r echo=FALSE, eval = T, TotalInq_ProsperRating}
+df2 %>%
+  subset(x=., !is_outlier(TotalInquiries)  & 
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data=., Prosper_Rating = factor(ProsperRating..Alpha.,
+                                                 levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = Prosper_Rating,
+                                 y = TotalInquiries)) + 
+  geom_boxplot(aes(fill = Prosper_Rating)) + 
+  stat_summary(fun.y = median, aes(group =1), geom='smooth') +
+  stat_summary(fun.y = median, aes(group =1), geom='point', shape =3) +
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens'))
+```
+
+```{r echo=FALSE, eval = T, StatedIncome_ProsperRating}
+df2 %>%
+  subset(x=., !is_outlier(StatedMonthlyIncome)  & 
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data=., Prosper_Rating = factor(ProsperRating..Alpha.,
+                                                 levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = Prosper_Rating,
+                                 y = StatedMonthlyIncome)) + 
+  geom_boxplot(aes(fill = Prosper_Rating)) + 
+  stat_summary(fun.y = median, aes(group =1), geom='smooth') +
+  stat_summary(fun.y = median, aes(group =1), geom='point', shape =3) +
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens'))
+```
+
+<font size = 4> - (3.2.2) Prosper Rating and Loan Original Amount</font>
+
+> Large Loan amount is more often observed in highly rated Prosper loans. 
+For loan ratings lower than C, the median loan amounts drops significantly, and loan amounts become more concentrated at lower tail of the distribution.
+
+``` {r echo = F, eval = T, ProsperRating_LoanAmount}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data = ., 
+                Prosper_rating = factor(ProsperRating..Alpha.,
+                                        levels = c('AA', LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = factor(Prosper_rating),
+                                 y = LoanOriginalAmount)) +
+  geom_boxplot(aes(fill = factor(Prosper_rating))) +
+  stat_summary(fun.y=median, geom='point', shape = 3) +
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group = 1), fill = 'lightblue',
+               alpha = 0.1) +
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens')) + 
+  xlab(label='Prosper_Rating')
+```
+
+<font size = 4> - (3.2.3) Prosper Rating and Debt To IncomeRatio</font>
+
+> Here, Debt to Income Ratio is roughly monotonicly decreasing with respect to Prosper rating. It is in constrast with the previous result where We found that Detb to Income Ratio is bell-shaped with respect to the credit score. 
+
+```{r echo = F, eval = T, ProsperRating_DebttoIncome}
+df2 %>%
+  subset(x=., !is_outlier(DebtToIncomeRatio) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data = ., 
+                Prosper_rating = factor(ProsperRating..Alpha.,
+                                        levels = c('AA', LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = factor(Prosper_rating),
+                                 y = DebtToIncomeRatio)) +
+  geom_boxplot(aes(fill = factor(Prosper_rating))) +
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group = 1)) +
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens')) + 
+  xlab(label='Prosper_Rating')
+```
+
+## ____
+
+<font size = 5>- (3.3) Borrower rate and its determinant </font>
+
+<font size = 4>- (3.3.1) Borrwer rate v.s. prosper rating </font>
+
+> From the Histogram, we could notice that lower Prosper ratings is coupled with higher borrower rate in distribution.
+
+```{r echo = F, eval = T, BorrowerRate_ProsperRating}
+df2 %>%
+  subset(x = ., !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data = ., 
+                Prosper_rating = factor(ProsperRating..Alpha.,
+                                        levels = c('AA', LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = BorrowerRate,
+                                 group = Prosper_rating)) + 
+  geom_histogram(aes(fill = Prosper_rating), alpha = 0.6, 
+                 color = 'black', size = 0.4)
+```
+
+<font size = 5>- (3.3.2) Borrwer rate v.s. Credit Score </font>
+
+> We could observe clearly that as credit score increases, the median interest rate for each credit score category is downwards moving: borrowers with higher scores enjoy lower interest rates.
+
+```{r echo = F, eval = T, BorrowerRate_creditScore}
+df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data=.,mapping = aes(x = factor(CreditScoreRangeLower),
+                              y = BorrowerRate)) + 
+  geom_boxplot(aes(fill = CreditScoreRangeLower), alpha = 0.9) +
+  stat_summary(fun.y = median, geom='smooth', aes(group = 1), alpha = 0.4,
+               linetype = 4, color = 'orange')  + 
+  scale_color_brewer(palette = 'Blues') +
+  xlab(label = 'CreditScoreRangeLower')
+```
+
+## ____
+<font size = 5> (3.4) Which loans do investors prefer? </font>
+
+> How do investors evaluate the loans? We observe a pronounced polarization phenomena. Most people prefer loans with highest rating AA; then we can oberve that those who choose to invest in categories D, E and HR are not less than those who choose to invest in A category. The least popular category being B and C, maybe because they are plain-vanilla.
+
+> The distributions of the investors who prefer lower rated loans are more concentrated than the other categories.
+
+```{r echo = F, eval = T, ProsperRating_Investors}
+df2 %>%
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(Investors)) %>%
+  dplyr::mutate(.data = ., 
+                Prosper_rating = factor(ProsperRating..Alpha.,
+                                        levels = c('AA', LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = factor(Prosper_rating),
+                                 y = Investors)) +
+  geom_boxplot(aes(fill = factor(Prosper_rating))) +
+  stat_summary(fun.y = median, geom = 'point', 
+               aes(group = 1), shape = 3)+ 
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group = 1)) + 
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens')) +
+  xlab(label = 'Prosper_Rating')
+```
+
+> I now plot the relationship between Investors and credit scores to verify the above relationship. Notice that I transform the Investor variable to reduce the impact of outliers which we do not want to exclude.
+
+```{r echo=F, eval=T, Investors_CreditScores}
+df2 %>%
+  subset(x=., !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data = ., mapping = aes(x = factor(CreditScoreRangeLower),
+                                 y = log(1+Investors))) +
+  geom_boxplot(aes(fill = CreditScoreRangeLower)) +
+  stat_summary(fun.y = median, geom = 'point', 
+               aes(group = 1), shape = 3)+ 
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group = 1), color ='orange', linetype=5) + 
+  scale_color_brewer(palette = 'Blues') + 
+  xlab(label = 'CreditScoreRangeLower')
+```
+
+## ____
+
+<font size = 5> - (3.5) Estimated Return and its determinants. </font>
+
+<font size = 4> - (3.5.1) Estimated Return and Borrower Rates.</font>
+
+> By plotting the relationship between the borrower rate and the estimated returns, we find that the yield-loss difference is more dispersed with respect to the borrower rates. 
+
+> When the borrower rate increases, we expect that the estimated return should also increase. However, as the borrower rate increases, the loan burden for the borrower also inreases, thus there is higher probability that the loan becomes charged-off. There is clearly a trade off: if the charge-off effect dominates the increase in borrower rate, then the estimated return can fall, hence we would observe a bell shape relationship between borrower rate and estimated return.
+
+``` {r echo = F, eval = T, EstimatedReturn_BorrowerRates}
+p0 <- df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=. , mapping = aes(x= BorrowerRate,
+                                y= EstimatedReturn)) +
+  geom_point(color = 'Green', alpha = 0.4)
+
+p <- df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=. , mapping = aes(x= BorrowerRate,
+                                y= EstimatedEffectiveYield-EstimatedLoss)) +
+  geom_point(color = 'red', alpha = 0.4)
+
+gridExtra::grid.arrange(p0,p, ncol=2)
+```
+
+<font size = 4> - (3.5.2) Estimated Return and Prosper Rating</font>
+
+> There are two very interesting observations.
+>Firstly, the median estimated return decreases with the Prosper loan rating: the lower the loan rating, the higher the estimated return from the loan!
+Secondly, although the median and mean estimated return is increasing, the yield-loss distribution for each prosper loan categories is becoming more and more dispersed and perhaps left skewed: a lot of loans can become charged off. 
+These partially explains why the estimated return can fall greatly for more risky loans.
+
+``` {r echo = F, eval = T, EstimatedReturn_ProsperRating}
+p0 <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data = ., 
+                P_rating = factor(ProsperRating..Alpha.,
+                                  levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data=.,mapping=aes(x=P_rating,
+                            y=EstimatedReturn)) +
+  geom_boxplot(aes(fill=P_rating)) + 
+  coord_cartesian(ylim = c(-0.05, 0.25)) + 
+  stat_summary(geom = 'smooth', aes(group=1), fun.y = median)+
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens'))
+
+p <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data = ., 
+                P_rating = factor(ProsperRating..Alpha.,
+                                  levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data=.,mapping=aes(x=P_rating,
+                            y=EstimatedEffectiveYield - EstimatedLoss)) +
+  geom_boxplot(aes(fill=P_rating)) + 
+  coord_cartesian(ylim = c(-0.05, 0.25)) + 
+  stat_summary(geom = 'smooth', aes(group=1), fun.y = median)+
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens'))
+
+gridExtra::grid.arrange(p0,p,ncol=2)
+```
+
+<font size = 4> - (3.5.3) Estimated Return and Credit History </font>
+
+> From the following graphs, we notice that, in general, the distribution of estimated returns for borrowers who have relatively clean credit history are more dispersed. We are not able to predict the direction of relations between any two variables, unless we include more control variables.
+
+```{r echo=F, eval=T, EstimatedReturn_CreditHistory}
+p0 <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=.,mapping=aes(x=TotalInquiries,
+                            y=EstimatedReturn)) +
+  stat_identity(alpha = 0.1) + 
+  geom_smooth()
+
+p1 <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=.,mapping=aes(x=TradesNeverDelinquent..percentage.,
+                            y=EstimatedReturn)) +
+  stat_identity(alpha = 0.1) + 
+  geom_smooth()
+
+p2 <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=.,mapping=aes(x=LoanCurrentDaysDelinquent,
+                            y=EstimatedReturn)) +
+  stat_identity(alpha = 0.1) + 
+  geom_smooth()
+
+p3 <- df2 %>%
+  subset(x=.,!is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  ggplot(data=.,mapping=aes(x=CurrentCreditLines,
+                            y=EstimatedReturn)) +
+  stat_identity(alpha = 0.1) + 
+  geom_smooth()
+
+gridExtra::grid.arrange(p0,p1,p2,p3, ncol=2, nrow=2)
+```
+
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+> Borrower's credit score is clearly impacted by her/his credit history. Most of the credit history variables such as `non-delinquency ratio`, `backcardUtilization` and `total inquiries` have straightforward and monotonic relationship with the borrower's credit score. Monthly income has a positive relationship with the credit score. 
+
+> My ultimate feature of interest is `Estimated return`, which can be bell-shaped with respect to the `Borrower rate`. We will study point in more details in the next section.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+> I notice a nonlinear relationship between the prosper loan rating and the number of investors. Mediocre ratings (Class B and C) are the least popular. 
+Investors' primary choice is to invest in the most secured categories (AA and A), and then would like to try the most risky categories (D, E, and HR)
+
+> This relationship is also present between number of investors and credit score, which makes sense, because credit score and prosper rating have a strong monotonic relationship.
+
+> I also notice a bell-shaped relationship between debt to income ratio and credit score.
+
+### What was the strongest relationship you found?
+
+> Non-delinquency rate and bankcard Utilization have strong monotonic relationship with credit score. The higher the non-delinquency rate, the higher the credit score. The lower the bankcard utilization, the higher the credit score.
+
+To be continued

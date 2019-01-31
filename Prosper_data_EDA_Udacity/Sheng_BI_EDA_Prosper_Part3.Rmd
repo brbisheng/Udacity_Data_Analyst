@@ -1,0 +1,559 @@
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(message=FALSE, warning = FALSE, echo=FALSE)
+```
+
+<head>
+<style>
+#top {
+    background: linear-gradient(to right, #ff9966 0%, #3399ff 100%);
+}
+</style>
+</head>
+
+<center>
+<div id = top>
+<font size = 8 color = 'black'>Prosper.com Exploratory Data Analysis</font>
+<br />
+<font size = 5 color = 'black'>by Sheng BI</font>
+<br />
+<br />
+<font size = 6 color = 'white'>Part III</font>
+</div>
+</center>
+
+```{r echo=FALSE, eval=T, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+library(ggplot2)
+library(robustbase)
+library(magrittr)
+# library(ggpubr)
+# library(ggExtra)
+# library(gridExtra)
+# library(plyr)
+library(dplyr)
+library(RColorBrewer)
+```
+
+```{r echo=FALSE, eval=T, Load_the_Data}
+
+# Load and Clean the Data
+
+## read data
+df <- read.csv('prosperLoanData.csv', 
+               stringsAsFactors = FALSE,
+               na.strings = c(''))
+
+## find the duplicate Listing Keys
+find_duplicates <- function(x) {
+  df_duplicates <- x %>%
+    plyr::ddply(.data=., .variables = 'ListingKey',
+                .fun = function(subdf) nrow(subdf)) %>%
+    subset(x=., V1>=2)
+  return(df_duplicates)
+}
+
+df_listingkey_m <- find_duplicates(df)
+
+## remove duplicates
+
+remove_dup <- function(x =df, dup = df_listingkey_m$ListingKey) {
+  
+  rows_kept <- c()
+  
+  df1 <- x[x$ListingKey %in% dup,]
+  
+  for (each in dup) {
+    temp_df1 <- subset(df1, ListingKey == each)
+    rows_kept <- c(rows_kept, max(rownames(temp_df1)))
+  }
+  
+  df1_removed <- df1[!(rownames(df1) %in% rows_kept), ]
+  
+  final_df <- x[!(rownames(x) %in% rownames(df1_removed)), ]
+  
+  return(final_df)
+}
+
+## get the cleaned data frame
+df2 <- remove_dup()
+
+rm(df_listingkey_m)
+
+## outlier_detector and listing categories
+is_outlier <- function(x) {
+  return(x < quantile(x, probs = 0.25, na.rm = TRUE) - 
+           1.5 * IQR(x = x, na.rm=TRUE) | 
+           x > quantile(x, probs = 0.75, na.rm = TRUE) + 
+           1.5 * IQR(x = x, na.rm=TRUE))
+}
+
+listing_category_list <- 
+  c('Not Available', 'Debt Consolidation', 'Home Improvement',
+    'Business', 'Personal Loan', 'Student Use', 'Auto', 
+    'Other', 'Baby&Adoption', 'Boat', 'Cosmetic Procedure',
+    'Engagement Ring', 'Green Loans', 'Household Expenses',
+    'Large Purchases', 'Medical/Dental', 'Motorcycle', 'RV', 'Taxes',
+    'Vacation', 'Wedding Loans')
+
+```
+
+
+# Multivariate Plots Section
+
+> In this section, we will check whether our previous result is valid, and will see whether the new variables introduced could bring new insights. Specifically, we are going to answer the following question:
+
+> Can we better explain the borrower's rate, investor's preference, and investor's estimated return?
+
+> I will consider mainly consider the impacts from the following vairables: 
+1. `Currently in group`, this is a variable which is often under-studied, but could have potential interests because it reflects borrowers' behaviors in Prosper.
+2. `Total inquiries` also did not receive much attention in other reports concerning Prosper.
+
+> Previously, we notice that `Estimated return` is not equal to `Esitmated Effective yield` - `Estimated loss`. In the following, we will use the latter to represent estimated return, and study how the other factors impact it.
+
+<font size = 5> (4.1) x = Credit score Range, z = Currently in group, y = Borrower rate | y = Estimated Loss </font>
+ 
+
+> Talking about groups, we may ask the following questions. Is this group created with a clearly defined objective of helping borrowers to get loans? If yes, does this group have strict admission critieria? Is this group screening borrowers efficiently? Is the group doing a good follow-up job by regularly urging borrowers to meet the loan payment deadline? If we have yeses for all the questoins, we may expect that Joining Group becomes a positie signal that the loan or borrower is worth investing. 
+
+> There are also peculiarities: Some groups only allow elite people to get in, so that by joining these groups, people can have better networks; this is like the linkedin in the real world. There are also groups which had good initiative at the beginning, but because of inefficient management, became just a place for fun.
+
+> In our data set, Only 11% of the borrowers joined group. We will now draw two groups, in which the x variable is the credit score, the y variable is either borrower rate or the estimated return, and our third variable is whether currently in group. 
+
+```{r echo = F, eval = T, brate_return_creditscore_group}
+
+## y = Borrower rate, x = Credit score Range, z = Currently in group
+p0 <- df2 %>% 
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data=.,mapping=aes(x=factor(CreditScoreRangeLower),
+                            y=BorrowerRate,
+                            color=CurrentlyInGroup)) +
+  stat_boxplot(geom = 'boxplot', alpha = 0.7) +
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group=CurrentlyInGroup)) + 
+  xlab(label = 'CreditScoreRangeLower')
+
+
+## y = Estimated Return, x = Credit score Range, z = Currently in group
+p1 <- df2 %>% 
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(CreditScoreRangeLower)) %>%
+  ggplot(data=.,mapping=aes(x=factor(CreditScoreRangeLower),
+                            y=EstimatedEffectiveYield- 
+                              EstimatedLoss,
+                            color=CurrentlyInGroup)) +
+  stat_boxplot(geom = 'boxplot', alpha = 0.5) +
+  stat_summary(geom = 'smooth', aes(group = CurrentlyInGroup),
+               fun.y=median) + 
+  xlab(label = 'CreditScoreRangeLower')+ 
+  coord_cartesian(ylim = c(-0.2,0.25))
+
+gridExtra::grid.arrange(p0,p1)
+
+```
+
+> In the upper graph, the y variable is the borrower's rate, which can be regarded as the ex ante return of the loan. We notice that for borrowers with credit score greater than 700, being in a group yields much less dispersed distribution of interesting rates with a lower mean, median and variance. For borrowers with credit score less than 700, being in a group does not bring significant benefit.
+
+> In the lower graph, the y variable is the estimated return, which can be regarded as the ex post return of the loan. We notice that for borrowers with credit score greater than 700, the ex post return of loans from joining a group is significantly less campared to the ex ante return obtained in the last graph in terms of median. At the same time, for borrowers with credit score less than 700 and are currently in a group, their distribution of returns are more dispersed in terms of variance. These results show that it is highly possible that borrowers join a group because they understand that this helps them get the loan, however, the group does not effectively help them to meet the loan due payment or prevent them from defaulting. 
+
+
+<font size =5> (4.2) x = Credit score Range, y = Borrower rate/Estimated Return, z = Total Inquires </font>
+
+> The median total inquiries is 5. I create a discrete variable Inq, to see whether the total inquiry is greater than 5. The graph is as follows. We see that when the borrower's total inquiry is greater than 5, their median borrower rate is significantly higher, for each credi score group. As for the estimated return, the effect is only significant for the individuals who have high credit scores. We notice that greater number of inquiries seems to imply higher estimated return, contrary to our intuition. 
+
+``` {r echo = F, eval = T, score_rate_return_inq}
+p0 <- df2 %>% 
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(CreditScoreRangeLower) &
+           !is_outlier(TotalInquiries)) %>%
+  dplyr::mutate(.data = ., inq = ifelse(TotalInquiries >5,
+                                        TRUE, FALSE)) %>%
+  ggplot(data=.,mapping=aes(x=factor(CreditScoreRangeLower),
+                            y=EstimatedEffectiveYield-
+                              EstimatedLoss,
+                            color = inq)) +
+  stat_boxplot(geom = 'boxplot', alpha = 0.7) +
+  stat_summary(aes(group = inq), geom = 'smooth',
+               fun.y= median) + 
+  xlab(label = 'CreditScoreRangeLower')+
+  coord_cartesian(ylim = c(0,0.2))
+
+p1<- df2 %>% 
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(CreditScoreRangeLower) &
+           !is_outlier(TotalInquiries)) %>%
+  dplyr::mutate(.data = ., inq = ifelse(TotalInquiries >5,
+                                        TRUE, FALSE)) %>%
+  ggplot(data=.,mapping=aes(x=factor(CreditScoreRangeLower),
+                            y=BorrowerRate,
+                            color = inq)) +
+  stat_boxplot(geom = 'boxplot', alpha = 0.7) +
+  stat_summary(aes(group = inq), geom = 'smooth',
+               fun.y= median) + 
+  xlab(label = 'CreditScoreRangeLower')+
+  coord_cartesian(ylim = c(0,0.35))
+
+gridExtra::grid.arrange(p0,p1)
+```
+
+<font size = 5> - (4.3) x = prosper loan rating, y = investors, z = currently in group </font>
+
+Investors can observe the loan rating and whether the borrower is in a group, not the credit score of the borrowers.From the graph, we notice that when investors are more likely to invest when the borrower is in a group.
+
+``` {r echo = F, eval = T, rating_investors_group}
+df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.,P_rating = factor(ProsperRating..Alpha.,
+                                    levels = c('AA',LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = P_rating,
+                                 y = Investors,
+                                 color = CurrentlyInGroup)) + 
+  stat_boxplot(geom = 'boxplot') +
+  stat_summary(geom='smooth', aes(group = CurrentlyInGroup),
+              fun.y=median) + coord_cartesian(ylim = c(0,500))
+```
+
+<font size = 5> (4.4) x = Borrower rate, y = Estimated return, z = ProsperRating </font>
+
+> Finally, I will pick up the most important question, whether estimated return depends monotonically on borrower rate. 
+
+> This result is presended in the following graph. It confirms our previous conjecture that estimated return depends non-linearly on borrower rate. As borrower rate gets too high, the default rate increases, so that the estimated loss pulls the yield down. This relationship is becoming more pronounced for the loans with lower prosper ratings.
+
+```{r echo = F, eval = T, rate_return_rating}
+df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data=., Prosper_Rating = factor(ProsperRating..Alpha.,
+                                                 levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data=. , mapping = aes(x= BorrowerRate,
+                                y= (EstimatedEffectiveYield-
+                                      EstimatedLoss))) +
+  geom_point(aes(color = Prosper_Rating), alpha = 0.02) +
+  geom_smooth(aes(group = Prosper_Rating,
+                  color = Prosper_Rating)) + 
+  scale_fill_manual(values = brewer.pal(n = 7, name = 'Greens')) +
+  scale_color_manual(values = brewer.pal(n = 7, name = 'Greens'))
+```
+
+## (4.5) Build model
+
+> In the following, I will use `Estimated Effective Yield - Estimated Loss` as my dependent variable. (If I use Estimated Return for my dependent variabel, my R^2 achieved 93%, but I think this variable is not credible.)
+
+> I will also use the whole data set as my training data. At last I will conduct *cross validation* and show that the above results are deceptive.
+
+```{r echo = F, eval = T, lmfit1}
+df2 %<>%
+  dplyr::mutate(.data = ., yield = EstimatedEffectiveYield - 
+                  EstimatedLoss)
+
+my_formula <- I(yield) ~ 
+  TotalInquiries + CreditScoreRangeLower +
+  factor(CurrentlyInGroup) + 
+  CreditScoreRangeLower * factor(CurrentlyInGroup) +
+  BorrowerRate + I(BorrowerRate^2) + 
+  DebtToIncomeRatio + TradesNeverDelinquent..percentage.+
+  ProsperRating..numeric. +
+  I(MonthlyLoanPayment/StatedMonthlyIncome) + CurrentCreditLines +
+  LoanMonthsSinceOrigination+
+  LP_CustomerPrincipalPayments +
+  ProsperPaymentsOneMonthPlusLate + 
+  LoanCurrentDaysDelinquent
+
+lmfit1 <- lm(data=df2, my_formula)
+
+summary(lmfit1)
+
+# RMSE
+sqrt(mean((predict(lmfit1) - 
+             df2[as.numeric(names(lmfit1$fitted.values)),]$yield)^2,
+          na.rm=TRUE)) 
+# MAPE
+mean(abs(df2[as.numeric(names(lmfit1$fitted.values)),]$yield-
+           predict(lmfit1)/df2[as.numeric(names(lmfit1$fitted.values)),]$yield), na.rm=TRUE) 
+## R squared
+cor(df2[as.numeric(names(lmfit1$fitted.values)),]$yield,
+    predict(lmfit1))^2
+
+```
+
+> We find that the model R^2 is fairly low, it can be due to several reasons: outliers, heteroskedasticies, multicolinearities, non-linear relationships etc. We will deal with the first two cases here.
+
+> By the  Breusch-Pagan Test, we find that the homoskedasticity assumption is rejected. A standard way to deal with heteroskedasticity problem is to use weighted least square to assign different weights to observations. There are various ways of selecting weights, since our data set is large, it is legitimate to use the squared fitted residuals regressed on the fitted yield. The R^2 improved significantly. However, R^2 is just one of the statistice which measure model accuracy. If we look at the RMSE and MAPE, we find that the model accuracy is in fact decreasing.
+
+``` {r echo = F, eval = T, bptest}
+lmtest::bptest(lmfit1)
+
+lmfit2 <- df2 %>%
+  .[as.numeric(names(lmfit1$residuals)), ] %>%
+  lm( my_formula, data =., 
+      na.action = na.exclude,
+      weights = 1/fitted(lm(abs(residuals(lmfit1)) ~ fitted(lmfit1)))^2)
+
+summary(lmfit2)
+
+# RMSE
+sqrt(mean((predict(lmfit2) - 
+             df2[as.numeric(names(lmfit2$fitted.values)),]$yield)^2,
+          na.rm=TRUE)) 
+# MAPE
+mean(abs(df2[as.numeric(names(lmfit2$fitted.values)),]$yield-
+           predict(lmfit2)/df2[as.numeric(names(lmfit2$fitted.values)),]$yield), na.rm=TRUE) 
+
+```
+
+> Now, we would like to see if we reduce the amount of outliers, how the result would be improved. There are variables ways to screen outliers. For example, we can trim each variable by using the `Q1 - 1.5*IQR < x < Q3 + 1.5*IQR` rule. However, this method could make us mistakenly remove influential points. Here, I am going to use one *Resistant Regression Method* to deal with outliers, the method is called least trimmed sum of squares. From the result, we could notice that the R square level increases dramatically, however, the RMSE and MAPE results also increase greatly.
+
+``` {r echo = F, eval = T, least_trimmed}
+lmfit3 <-
+  robustbase::ltsReg(my_formula, data=df2)
+
+summary(lmfit3)
+```
+
+> At last, recall that we used the full sample as our traing data. Now let us conduct *k-fold cross validation* on the basic linear model to examine our previous results. Due to the limitation of my cloud r server, I have to program the cross validation myself, below is the code.
+
+```{r echo = F, eval = T, cross_validation}
+train_control <- function(df,k) {
+  # df is the input dataframe
+  # k is the number of partitions.
+  
+  n_class <- round(nrow(df)/k)
+  
+  test <- list()
+  
+  for (i in 1:(k-1)) {
+    test[[i]] <- (((i-1)*n_class)+1):(i*n_class)
+  }
+  
+  test[[k]] <- (((k-1)*n_class)+1):(nrow(df))
+  
+  return(test)
+}         
+
+train_fit <- function(df,k,formula,test_data) {
+  
+  lmfit <- list()           #to save regression results
+  result <- matrix(0, k, 3) #to store RMSE, MAPE, R2 results
+  colnames(result) <- c('RMSE', 'MAPE', 'Rsq')
+  
+  for (i in 1:k) {
+    lmfit[[i]] <- lm(formula, data= df[-test_data[[i]],], 
+                     na.action=na.exclude)
+    ypred <- predict(lmfit[[i]], newdata=df[test_data[[i]],])
+    y <- df[test_data[[i]],]$yield
+    RMSE = sqrt(mean((y- ypred)^2, na.rm=TRUE))
+    MAPE = mean(abs(y-ypred/y), na.rm=TRUE)
+    Rsq = cor(!is.na(y),!is.na(ypred))^2
+    result[i, ] <- c(RMSE, MAPE, Rsq)
+  }
+  return(result)
+}
+
+test_data <- train_control(df2,10) 
+
+train_fit(df2, 10, my_formula, test_data)
+```
+
+> We could see that, the r square level for the test set is much lower than what we expected, while the RMSE and MAPE level both increase slightly overall. These suggest that the linear setup is not valid, and much have to be done for future studies.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+> I confirm my previous conjecture that estimated return is bell-shaped in borrower rate, and I find that this relationship is present in every prosper rating category, with the effect being more pronounced for more risky categories. I find that the `currently in group` variable can imply some sort of adverse selection problem: individuals who join the group are deemed as being more credible.
+
+### Were there any interesting or surprising interactions between features?
+
+> Estimated return is bell-shaped in borrower rate, and this relationship is more pronounced for more risky categories. Investors tend to prefer the junk loans (prosper rating lower than D) to the B and C categories. 
+
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+> I consider and discuss some models which brings improvement to the OLS. I find the presence of outliers and heteroskedasticity problems, and suggest ways to treat them.
+
+> I start with linear model, I find presence of heteroskedasiticity. I suggest to use weighted least square method to deal with heteroskedasiticty and the the R^2 indicator improved by more than 30%. The model can be improved by considering non-linear regression, non-parametric regression, and machine learning methods. 
+
+> However, the model above improvements are measured by R2. From the other measurements such as RMSE an MAPE, we do not see significant improvement in the model set up. Moreover, we also see that from cross validation that the original linear model has very poor performance in the test set. 
+
+> I thus suggest to improve the model in the following directions: 
+(1) deal with potential multicolinearility problems
+(2) deal with outlier and missing value problems more carefully
+(3) include more independent variables, or create new features to increase explanatory power
+(4) use more advanced machine learning models to capture model non linearity. 
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, eval = T, Plot_One_ListingCategory_LoanOriginalAmount}
+
+temp <- df2 %>%
+  plyr::ddply(.data = ., 
+              .variables = 'ListingCategory..numeric.',
+              .fun = function(x) median = median(x$LoanOriginalAmount)) %>%
+  .[order(.$V1),] %>%
+  .[,1] + 1
+
+listing_category_list <- 
+  c('Not Available', 'Debt Consolidation', 'Home Improvement',
+    'Business', 'Personal Loan', 'Student Use', 'Auto', 
+    'Other', 'Baby&Adoption', 'Boat', 'Cosmetic Procedure',
+    'Engagement Ring', 'Green Loans', 'Household Expenses',
+    'Large Purchases', 'Medical/Dental', 'Motorcycle', 'RV', 'Taxes',
+    'Vacation', 'Wedding Loans')
+
+df2 %>%
+  dplyr::mutate(.data =., Listing_Category = 
+                  ordered(x = factor(x = .$ListingCategory..numeric. + 1,
+                                     levels = c(1:21),
+                                     labels = listing_category_list),
+                          levels = listing_category_list[temp])) %>%
+  ggplot(data = ., 
+         mapping = 
+           aes(x = Listing_Category,
+               y = .$LoanOriginalAmount)) + 
+  geom_boxplot(aes(fill = Listing_Category)) + 
+  stat_summary(fun.y = median, aes(group=1), 
+               geom = 'smooth', color = 'orange') + 
+  ylab(label = 'LoanOriginalAmount') +
+  coord_flip() + 
+  theme(legend.position="none", 
+        plot.title = element_text(hjust = 0.5)) + 
+  labs(x = 'Listing_category', y = 'Loan_original_amount (dollor)') +
+  ggtitle('Loan original amount by Listing category')
+
+```
+
+
+### Description One
+
+> For which purpose do people borrow most? This descriptive plot gives an answer. It surprises me that Baby&Adoption and WeddingLoans have higher median than that of Business. It makes sense to notice that Debt Consolidation consists of the most important reason for loan, an aftermath of the financial crisis. 
+
+### Plot Two
+```{r echo=FALSE, eval = T,  Plot_Two}
+temp <- df2 %>%
+  plyr::ddply(.data = ., 
+              .variables = 'ListingCategory..numeric.',
+              .fun = function(x) median = median(x$Investors)) %>%
+  .[order(.$V1),] %>%
+  .[,1] + 1
+
+df2 %>%
+  dplyr::mutate(.data =., Listing_Category = 
+                  ordered(x = factor(x = .$ListingCategory..numeric. + 1,
+                                     levels = c(1:21),
+                                     labels = listing_category_list),
+                          levels = listing_category_list[temp])) %>%
+  ggplot(data = ., 
+         mapping = 
+           aes(x = Listing_Category,
+               y = .$Investors)) + 
+  geom_boxplot(aes(fill = Listing_Category)) + 
+  stat_summary(fun.y = median, aes(group=1), 
+               geom = 'smooth', color = 'orange') + 
+  coord_flip() + 
+  theme(legend.position="none", 
+        plot.title = element_text(hjust = 0.5)) + 
+  labs(x = 'Listing_category', y = 'Investors') +
+  ggtitle('Investors by Listing Category')
+```
+
+### Description Two
+> Now, which loans are the most popular among investors? 
+
+> It is interesting to notice that in this graph, most of the top ten ranking listing categores consist of loans the original amount of which is low as could be checked from the previous graph, So that the ranking is somewhat reversed. 
+Does this mean that investors prefer to invest small loans? Not necessarily, recall from the univariate plot section that there is a fairly large number of investors who invested massively in just one loan.
+
+### Plot Three
+```{r echo=FALSE, eval = T, Plot_Three}
+df2 %>%
+  subset(x=., !is.na(ProsperRating..Alpha.) &
+           !is_outlier(Investors)) %>%
+  dplyr::mutate(.data = ., 
+                Prosper_rating = factor(ProsperRating..Alpha.,
+                                        levels = c('AA', LETTERS[1:5],'HR'))) %>%
+  ggplot(data = ., mapping = aes(x = factor(Prosper_rating),
+                                 y = Investors)) +
+  geom_boxplot(aes(fill = factor(Prosper_rating))) +
+  stat_summary(fun.y = median, geom = 'point', 
+               aes(group = 1), shape = 3)+ 
+  stat_summary(fun.y = median, geom = 'smooth', 
+               aes(group = 1)) + 
+  scale_fill_manual(values = brewer.pal(n = 7,name='Greens')) +
+  xlab(label = 'Prosper_Rating') + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggtitle('Investors by Loan prosper rating')
+```
+
+### Description Three
+
+> It appears some investors prefer junk loans (D, E and HR categories) to  the mediocre loans (B and C).
+
+### Plot Four
+```{r echo=FALSE, eval = T, Plot_Four}
+df2 %>%
+  subset(x = ., !is_outlier(CreditScoreRangeLower) &
+           !is.na(ProsperRating..Alpha.)) %>%
+  dplyr::mutate(.data=., Prosper_Rating = factor(ProsperRating..Alpha.,
+                                                 levels = c('AA', LETTERS[1:5], 'HR'))) %>%
+  ggplot(data=. , mapping = aes(x= BorrowerRate,
+                                y= (EstimatedEffectiveYield-
+                                      EstimatedLoss))) +
+  geom_point(aes(color = Prosper_Rating), alpha = 0.02) +
+  geom_smooth(aes(group = Prosper_Rating,
+                  color = Prosper_Rating)) + 
+  scale_fill_manual(values = brewer.pal(n = 7, name = 'Greens')) +
+  scale_color_manual(values = brewer.pal(n = 7, name = 'Greens')) + 
+  ylab(label = 'Estimated Yield - Estimated Loss (rate)')+
+  theme(plot.title = element_text(hjust = 0.5, size =12)) +
+  ggtitle('Estimated Return v.s. Borrower Rate by Prosper Rating')
+```
+
+### Description Four
+> The effective yield is bell-shaped with respect to the borrower rate. The intuition is that when the interest rate gets higher, the probability that the loan becomes charged off increases. This relationship is confirmed for every loan category, with the effect being most pronounced for more risky loans.
+
+
+------
+
+# Reflection
+
+
+> Now let us answer the questions we raised at beginning.
+
+1. What are the determinants of Borrower rate?
+
+The most important determinants of borrower rate is credit score and prosper rating, since these two variables are in fact a good summary of borrowers' background and credit history.
+
+2. What are the determinants of Propser Rating?
+
+Credit score is certainly a main determinant for prosper rating. StatedMonthlyIncome is also correlated with prosper rating, but the relationship is not too strong. In my bivariate study, I find that those variables on credit history usually have non-linear relationship with the prosper rating. This is understandable. Prosper rating is an ordinal categorical variable which results from Prosper's credit risk modeling. In models with discrete dependent variables, the estimation result is very sensitive to the data structure. Hence, these non-linear relationships should be taken with caution.
+
+3. Which loan do the investors prefer?
+
+The most surprising result is that investors seem to prefer junk loans (D,E,HR) to mediocre loans (B,C), and this result is confirmed by studying both prosper rating and borrower's credit score. This can partially imply that the risk attitude of the investors are polarized.
+
+4. What are the determinants of Estimated Return?
+
+I find that the better the prosper rating, the lower the median estimated return. However, it is true that higher return is coupled with higher risk, and the yield distribution is becoming more dispersed. This result can be confirmed by looking at the relationship between prosper rating and other variables on borrowers' credit history. 
+
+> There are some other points which impress me most during the study:
+
+- Most of the borrowers borrow for Debt consolidation. This is in general not a good sign, because from the data we could notice that debt consolidation is long-lasting process, and Prosper loans have in fact quite high default/charge-off rates. 
+
+- When I build the model, I find that this data set is present with many problems, which prevent us from applying many regression models directly, because they are inconsistent with most of the models assumptions. In particular, there are considerable amount of outliers, which can significantly bias the result of our predictive model. At last, we noticed a lot of non-linear relationships in the EDA study, if we add polynomials in basic econometric models, we have to pay keen attention to the multicolinearity problems.
+
+> Further studies
+
+I am an economist. From my perspective, I will make several suggestions for future studies.
+
+1. Firstly, I think we should put more focus on understanding borrowers' behaviors. We have a lot more information concerning the borrowers' credit history than information on borrowers' behavior and activities in Prosper. For example, how do they behave in the prosper discussion forum? `CurrentlyInGroup` is a very important variable which can have important interaction effect with other variables, and this variable is very closely related to many important concepts such as adverse selection and moral hazard. I would dig deeper around this variable for further studies.
+
+2. Secondly, we have to look into the problem of outliers more carefully, and try to better distinguish outliers and influential points. This is very important for predictive model building. Understanding the logic behind their behaviors is a very important step before diving into the data. We should have a clear structure of data in our mind, know what to check, and find the inconsistencies.
+
+3. Thirdly, as I pointed out, the definitions of some variables are vague, and can cause confusions for the data analysts. In addition, the descriptions of some relationships between variables seem to be mistaken, for example, `Estimated Return` is not equal to `Effective Estimated Yield - Estimated Loss`.
+
+## References
+
+Quiet period: https://www.lendacademy.com/a-look-back-at-the-lending-club-and-prosper-quiet-periods/
