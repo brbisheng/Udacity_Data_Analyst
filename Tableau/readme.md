@@ -19,6 +19,10 @@ Creat new variable: BMI
 
 ### feedback 反馈： 包含从第一份草图到最终可视化期间，你从他人那里获得的针对你的可视化的所有反馈
 
+First feedback:
+- It seems that the weight and height are whole numbers. 
+- The path graph is inaccurate, because the groups have different number of data points.
+
 ### resource. 资源： 列出你创建可视化时参考的任何来源
 
 References:
