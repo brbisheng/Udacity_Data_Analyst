@@ -1,23 +1,26 @@
+First version:
+
+Final version: 
+
+
+
 ## Data 
+Baseball data contains information from 1157 players. The following features are included
+- Physical features:
+    - `Height`
+    - `Weight`
+    - `Handeness`
+- Performances:
+    - `Avg`: Batting Average
+    - `HR`: Number of Home runs
 
-Baseball data containing 1157 players. The following features are included
-- `Avg`: Batting Average
-- `Height`
-- `Weight`
-- `HR`: Number of Home runs
-- `Handeness`
 
-
-## Report
-1. First version:
-    - Feedback:
-        1. 
-        2. 
-2. Second version: 
+### Summary
+We want to study to the interactions between the physical features of baseball players and their performances.
 
 
 
-### quick summary
+### Quick summary
 1. `HR` is increasing in both `Weight` and `Height`. 
 2. `Avg` is decreasing in both `Weight` and `Height`.
 3. The slopes of the regression lines do not differ significantly when I compare the 3 handeness groups 'L', 'B', and 'R'.
