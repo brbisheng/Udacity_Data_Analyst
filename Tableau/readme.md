@@ -1,7 +1,7 @@
-First version:
+**First version:**
 https://public.tableau.com/profile/shengbi1015#!/vizhome/Udacity_Tableau_Version1/Story1?publish=yes
 
-Final version: 
+**Final version:**
 https://public.tableau.com/profile/shengbi1015#!/vizhome/Book1_15543894970930/Story1?publish=yes
 
 
@@ -23,7 +23,7 @@ We want to study the interactions between the physical features of baseball play
 3. Homerun (`HR`) appears to be exponentially increasing in Batting average (`Avg`), but there is significant heteroskedasticity.
 4. Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who have large `Weight` and `Height` at the same time..
 
-### design 设计： 解释你所做的任何设计选择，包括收集反馈后对可视化进行的更改
+### Design
 
 1. Univariate analysis
 
@@ -43,13 +43,13 @@ Batting average (`Avg`) has a nonlinear positive relationship with Homerun (`HR`
 Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who have large `Weight` and `Height` at the same time.
 
 
-### feedback 反馈： 包含从第一份草图到最终可视化期间，你从他人那里获得的针对你的可视化的所有反馈
+### Feedback
 
 - It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
 - You can try to create a new feature `BMI` from `Weight` and `Height`.
 - The linear relationship between `Weight` and `Avg`, as well as that of `Height` and `Avg` does not seem convincing.
 
-### resource. 资源： 列出你创建可视化时参考的任何来源
+### Resource
 
 References:
 1. Calculation of BMI
