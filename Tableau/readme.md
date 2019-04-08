@@ -16,7 +16,7 @@ Baseball data contains information from 1157 players. The following features are
 
 
 ### Summary
-We want to study to the interactions between the physical features of baseball players and their performances. I have the following discoveries:
+We want to study the interactions between the physical features of baseball players and their performances. I have the following discoveries:
 1. The histogram of the physical features can vary to a large extent when we adjust the bin size.     
 2. I find that both handed players have most stable performance, but they have significantly low number of homeruns in terms of quantiles.
 3. Homerun (`HR`) appears to be exponentially increasing in Batting average (`Avg`), but there is significant heteroskedasticity.
@@ -46,7 +46,7 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 
 - It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
 - You can try to create a new feature `BMI` from `Weight` and `Height`.
-- The linear relationship does not seem convincing.
+- The linear relationship between `Weight` and `Avg`, as well as that of `Height` and `Avg` does not seem convincing.
 
 ### resource. 资源： 列出你创建可视化时参考的任何来源
 
