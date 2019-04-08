@@ -1,7 +1,8 @@
 First version:
+https://public.tableau.com/profile/shengbi1015#!/vizhome/Udacity_Tableau_Version1/Story1?publish=yes
 
 Final version: 
-
+https://public.tableau.com/profile/shengbi1015#!/vizhome/Book1_15543894970930/Story1?publish=yes
 
 
 ## Data 
