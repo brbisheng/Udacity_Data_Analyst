@@ -18,8 +18,8 @@ Baseball data contains information from 1157 players. The following features are
 
 ### Summary
 We want to study the interactions between the physical features of baseball players and their performances. I have the following discoveries:
-1. The histogram of the physical features can vary to a large extent when we adjust the bin size.     
-2. I find that both handed players have most stable performance, but they have significantly low number of homeruns in terms of quantiles.
+1. The shape of histogram of the physical features can vary to a large extent when we adjust the bin size.     
+2. I find that both-handed players have most stable performance, but they have significantly low number of homeruns in terms of quantiles.
 3. Homerun (`HR`) appears to be exponentially increasing in Batting average (`Avg`), but there is significant heteroskedasticity.
 4. Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who have large `Weight` and `Height` at the same time..
 
@@ -36,7 +36,7 @@ When I created a new feature `BMI`, I find that it does not appear to bring us a
 
 When I use `Handedness` to explain `Avg` and `HR`, I find that both handed players have most stable performance: the dispersions of `Avg` and `HR` are both the least, however, this can be due to the fact that the number of both handed players is the least.
 
-Batting average (`Avg`) has a nonlinear positive relationship with Homerun (`HR`). In fact, as `Avg` increases, the variation of `HR` becomes larger and larger, this is called heteroskedastic in statistics.
+Batting average (`Avg`) has a nonlinear positive relationship with Homerun (`HR`). In fact, as `Avg` increases, the variation of `HR` becomes larger and larger, this is termed as heteroskedastic in statistics.
 
 3. Multivariate analysis
 
@@ -47,7 +47,9 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 
 - It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
 - You can try to create a new feature `BMI` from `Weight` and `Height`.
-- The linear relationship between `Weight` and `Avg`, as well as that of `Height` and `Avg` does not seem convincing.
+- The hypothesis of linear relationship between performance and physical features do not seem correct.
+    - You claim that `HR` is increasing in both `Weight` and `Height`, `Avg` is increasing in both `Weight` and `Height`. 
+    - But you also find that `HR` is nonlinearly increasing in `Avg`. That is contradictory to intuitions and is very confusing. Maybe there is some lurking variable, but you do not have that lurking variable because you only have a small data set. You should try something which imposes less stringent assumptions on your statistical model.
 
 ### Resource
 
