@@ -65,8 +65,13 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
     - **Reply**: Yes. Changes are applied.
 - [x] **Comment**: You could hide unused sheets in your dashboard and storyboard.
     - **Reply**: Yes. Changes are applied.
-- [x] **Comment**: You could hide unused sheets in your dashboard and storyboard.
+- [x] **Comment**: You should add your reply to the feedbacks.
     - **Reply**: Yes. Changes are applied.
+- [x] **Comment**: In your storyboard, the descriptions is too long to be fully displayed. 
+    - **Reply**: Yes. I adjusted the size of the captions and made the descriptions more concise.
+- [x] **Comment**: In the first part of your story, you mentioned that 'the distributions can vary to a large extent with respect to the bin size.' This is not a valid conclusion, please be more precise.  
+    - **Reply**: Yes. I have now added more details.
+    
 
 
 
