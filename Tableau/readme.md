@@ -32,7 +32,14 @@ We want to study the interactions between the physical features of baseball play
 
 I start with univariate analysis. I find that the histogram of physical features depend crucially on the bin size we choose. This is partly because `Weight` and `Height` are both whole numbers. Since Weight, Height and HR are all whole numbers. It would be more reasonable that the chosen bin size be also a whole number.
 
-When I created a new feature `BMI`, I find that it does not appear to bring us additional insight. This could also be attributed to the whole number nature of `Weight` and `Height`.
+To be more precise, 
+- `Height`: The suggested bin size is 1.92. With this bin size, the graph appears to be left skewed. When I change the bin size to 1, the graph appears to be more symmetric, but is not normal.
+- `Weight`: The suggested bin size is 7.6. With this bin size, the graph appears to be bimodal. When we change the bin size to 1, we can notice its whole number nature, and the variable appears to be right skewed.
+- `Avg`: Batting average is left skewed with a lot of zeros. 
+- `HR`: Number of Homeruns has a shape of exponetial distribution. 
+- `Handedness`: The majority of players are right-handed, 63.7% of the total obvervations. There are around 9.0% of both-handed players, and 27.3% of left-handed players.
+
+(When I created a new feature `BMI`, I find that it does not appear to bring us additional insight. This could also be attributed to the whole number nature of `Weight` and `Height`.)
 
 
 2. Bivariate analysis
@@ -71,7 +78,8 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
     - **Reply**: Yes. I adjusted the size of the captions and made the descriptions more concise.
 - [x] **Comment**: In the first part of your story, you mentioned that 'the distributions can vary to a large extent with respect to the bin size.' This is not a valid conclusion, please be more precise.  
     - **Reply**: Yes. I have now added more details.
-    
+- [x] **Comment**: Please add necessary labels and title. Please adjust the axis name.
+    - **Reply**: Yes. Changes are applied.
 
 
 
