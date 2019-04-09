@@ -1,8 +1,11 @@
 **First version:**
 https://public.tableau.com/profile/shengbi1015#!/vizhome/Udacity_Tableau_Version1/Story1?publish=yes
 
-**Final version:**
+**Second version:** (from Udacity mentor)
 https://public.tableau.com/profile/shengbi1015#!/vizhome/Book1_15543894970930/Story1?publish=yes
+
+**Final version:**
+
 
 
 ## Data 
@@ -45,11 +48,12 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 
 ### Feedback
 
-- It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
-- You can try to create a new feature `BMI` from `Weight` and `Height`.
-- The hypothesis of linear relationship between performance and physical features do not seem correct.
-    - You claim that `HR` is increasing in both `Weight` and `Height`, `Avg` is increasing in both `Weight` and `Height`. 
-    - But you also find that `HR` is nonlinearly increasing in `Avg`. That is contradictory to intuitions and is very confusing. Maybe there is some lurking variable, but you do not have that lurking variable because you only have a small data set. You should try something which imposes less stringent assumptions on your statistical model.
+First feedback:
+    - **Comment**: It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
+        - **Reply**: Yes, I have added a parameter for this sake.
+    - **Comment**: You can try to create a new feature `BMI` from `Weight` and `Height`.
+    - **Comment**: The hypothesis of linear relationship between performance and physical features do not seem correct. You claim that `HR` is increasing in both `Weight` and `Height`, `Avg` is increasing in both `Weight` and `Height`. But you also find that `HR` is nonlinearly increasing in `Avg`. That is contradictory to intuitions and is very confusing. Maybe there is some lurking variable, but you do not have that lurking variable because you only have a small data set. You should try something which imposes less stringent assumptions on your statistical model.
+        - **Reply**: 
 
 ### Resource
 
