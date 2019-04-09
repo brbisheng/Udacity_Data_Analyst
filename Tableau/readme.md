@@ -48,15 +48,28 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 
 ### Feedback
 
-First feedback:
-- **Comment**: It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
+*First feedback*:
+
+- [x] **Comment**: It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
     - **Reply**: Yes. I have added a parameter for this sake.
 
-- **Comment**: You can try to create a new feature `BMI` from `Weight` and `Height`.
+- [x] **Comment**: You can try to create a new feature `BMI` from `Weight` and `Height`.
     - **Reply**: Yes. I tried to create the feature `BMI` using the following formula 703 * `Weight`/(`Height`)^2. However, the new feature does not appear to bring me richer insights.
     
-- **Comment**: The hypothesis of linear relationship between performance and physical features do not seem correct. You claim that `HR` is increasing in both `Weight` and `Height`, `Avg` is increasing in both `Weight` and `Height`. But you also find that `HR` is nonlinearly increasing in `Avg`. That is contradictory to intuitions and is very confusing. Maybe there is some lurking variable, but you do not have that lurking variable because you only have a small data set. You should try something which imposes less stringent assumptions on your statistical model.
-    - **Reply**: It is true. In the current version, I use scatter plot for `Weight` and `Height`; I then divide `Avg` and `HR` respectively into two groups based on whether it the value is above of below the median. I then use shape and color to help illustrate the influence of physical qualities on performance. 
+- [x] **Comment**: The hypothesis of linear relationship between performance and physical features do not seem correct. You claim that `HR` is increasing in both `Weight` and `Height`, `Avg` is increasing in both `Weight` and `Height`. But you also find that `HR` is nonlinearly increasing in `Avg`. That is contradictory to intuitions and is very confusing. Maybe there is some lurking variable, but you do not have that lurking variable because you only have a small data set. You should try something which imposes less stringent assumptions on your statistical model.
+    - **Reply**: It is true. In the current version, I use scatter plot for `Weight` and `Height`; I then divide `Avg` and `HR` respectively into two groups based on whether the value is above or below the median. I then use shape and color to help illustrate the influence of physical qualities on performance. 
+    
+*Second feedback*:
+
+- [x] **Comment**: Please use automatic size for your dashboard and storyboard.
+    - **Reply**: Yes. Changes are applied.
+- [x] **Comment**: You could hide unused sheets in your dashboard and storyboard.
+    - **Reply**: Yes. Changes are applied.
+- [x] **Comment**: You could hide unused sheets in your dashboard and storyboard.
+    - **Reply**: Yes. Changes are applied.
+
+
+
 
 ### Resource
 
