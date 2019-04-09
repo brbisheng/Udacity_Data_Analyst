@@ -21,7 +21,7 @@ Baseball data contains information from 1157 players. The following features are
 
 ### Summary
 We want to study the interactions between the physical features of baseball players and their performances. I have the following discoveries:
-1. The shape of histogram of the physical features can vary to a large extent when we adjust the bin size.     
+1. Both Tthe distribution of `Weight` and that of `Height`appear to be right skewed, and the shape of physical feature distributions can vary to a large extent when we adjust the bin size.
 2. I find that both-handed players have most stable performance, but they have significantly low number of homeruns in terms of quantiles.
 3. Homerun (`HR`) appears to be exponentially increasing in Batting average (`Avg`), but there is significant heteroskedasticity.
 4. Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who have large `Weight` and `Height` at the same time..
@@ -33,7 +33,7 @@ We want to study the interactions between the physical features of baseball play
 I start with univariate analysis. I find that the histogram of physical features depend crucially on the bin size we choose. This is partly because `Weight` and `Height` are both whole numbers. Since Weight, Height and HR are all whole numbers. It would be more reasonable that the chosen bin size be also a whole number.
 
 To be more precise, 
-- `Height`: The suggested bin size is 1.92. With this bin size, the graph appears to be left skewed. When I change the bin size to 1, the graph appears to be more symmetric, but is not normal.
+- `Height`: The suggested bin size is 1.92. With this bin size, the graph appears to be normal. When I change the bin size to 1, the graph appears to be right skewed.
 - `Weight`: The suggested bin size is 7.6. With this bin size, the graph appears to be bimodal. When we change the bin size to 1, we can notice its whole number nature, and the variable appears to be right skewed.
 - `Avg`: Batting average is left skewed with a lot of zeros. 
 - `HR`: Number of Homeruns has a shape of exponetial distribution. 
@@ -58,7 +58,7 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 *First feedback*:
 
 - [x] **Comment**: It seems that `Weight` and `Height` are whole numbers. Maybe you could add a parameter to allow users to adjust bin size.
-    - **Reply**: Yes. I have added a parameter for this sake.
+    - **Reply**: Yes. I have added respective bin_size parameter for each histogram.
 
 - [x] **Comment**: You can try to create a new feature `BMI` from `Weight` and `Height`.
     - **Reply**: Yes. I tried to create the feature `BMI` using the following formula 703 * `Weight`/(`Height`)^2. However, the new feature does not appear to bring me richer insights.
@@ -75,7 +75,7 @@ Both Homerun (`HR`) and Batting average (`Avg`) tend to decrease for players who
 - [x] **Comment**: You should add your reply to the feedbacks.
     - **Reply**: Yes. Changes are applied.
 - [x] **Comment**: In your storyboard, the descriptions is too long to be fully displayed. 
-    - **Reply**: Yes. I adjusted the size of the captions and made the descriptions more concise.
+    - **Reply**: Yes. I adjusted the size of the captions.
 - [x] **Comment**: In the first part of your story, you mentioned that 'the distributions can vary to a large extent with respect to the bin size.' This is not a valid conclusion, please be more precise.  
     - **Reply**: Yes. I have now added more details.
 - [x] **Comment**: Please add necessary labels and title. Please adjust the axis name.
